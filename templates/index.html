@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Камень‑ножницы‑бумага</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            background: linear-gradient(135deg, #1e2a3a, #0f1724);
+            font-family: 'Segoe UI', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .game {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(8px);
+            border-radius: 40px;
+            padding: 30px;
+            width: 500px;
+            text-align: center;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+        }
+        h1 {
+            font-size: 28px;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #fff, #aaccff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        .score {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+        }
+        .score div {
+            background: rgba(0,0,0,0.5);
+            padding: 10px;
+            border-radius: 20px;
+            width: 45%;
+            color: #ffd966;
+            font-size: 24px;
+        }
+        .buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        button {
+            font-size: 48px;
+            background: rgba(0,0,0,0.5);
+            border: none;
+            border-radius: 60px;
+            width: 90px;
+            height: 90px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        button:hover { transform: scale(1.05); background: rgba(100,120,140,0.8); }
+        .result {
+            background: rgba(0,0,0,0.6);
+            border-radius: 24px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+        .choice {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .choice span { font-size: 32px; }
+        .message { font-size: 20px; font-weight: bold; color: #ffd966; }
+    </style>
+</head>
+<body>
+<div class="game">
+    <h1>✧ Камень · Ножницы · Бумага ✧</h1>
+    <div class="score">
+        <div>👤 Вы: <span id="playerScore">0</span></div>
+        <div>🤖 Бот: <span id="botScore">0</span></div>
+    </div>
+    <div class="buttons">
+        <button data-move="камень">🪨</button>
+        <button data-move="ножницы">✂️</button>
+        <button data-move="бумага">📄</button>
+    </div>
+    <div id="resultArea" class="result" style="display: none;">
+        <div class="choice">
+            <span>Вы: <span id="playerChoice"></span></span>
+            <span>Бот: <span id="botChoice"></span></span>
+        </div>
+        <div class="message" id="resultMsg"></div>
+        <button id="againBtn" style="font-size:16px; width:auto; height:auto; padding:8px 20px;">▶ Ещё раз</button>
+    </div>
+</div>
+
+<script>
+    // Эмодзи для отображения ходов
+    const emoji = { 'камень': '🪨', 'ножницы': '✂️', 'бумага': '📄' };
+    let playerScore = 0, botScore = 0;
+
+    // Элементы
+    const playerScoreEl = document.getElementById('playerScore');
+    const botScoreEl = document.getElementById('botScore');
+    const resultArea = document.getElementById('resultArea');
+    const playerChoiceSpan = document.getElementById('playerChoice');
+    const botChoiceSpan = document.getElementById('botChoice');
+    const resultMsgSpan = document.getElementById('resultMsg');
+
+    // Обработка клика по кнопкам хода
+    document.querySelectorAll('.buttons button').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const move = btn.getAttribute('data-move');
+            // Отправляем ход на сервер
+            const response = await fetch('/play', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ move: move })
+            });
+            const data = await response.json();
+
+            // Показываем область результатов
+            resultArea.style.display = 'block';
+            playerChoiceSpan.textContent = emoji[data.player];
+            botChoiceSpan.textContent = emoji[data.bot];
+            resultMsgSpan.textContent = data.message;
+
+            // Обновляем счёт
+            if (data.result === 'win') playerScore++;
+            else if (data.result === 'lose') botScore++;
+            playerScoreEl.textContent = playerScore;
+            botScoreEl.textContent = botScore;
+        });
+    });
+
+    // Кнопка "Ещё раз" просто скрывает результат, чтобы можно было сделать новый ход
+    document.getElementById('againBtn').addEventListener('click', () => {
+        resultArea.style.display = 'none';
+    });
+</script>
+</body>
+</html>
